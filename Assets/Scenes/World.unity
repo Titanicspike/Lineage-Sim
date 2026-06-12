@@ -370,10 +370,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldManager
   people: []
-  gridCellSize: 5000
+  gridCellSize: 1000
   ticksPerSecond: 1
   currentYear: 0
-  initialPopulation: 1000
+  initialPopulation: 100
   references:
     version: 2
     RefIds: []
