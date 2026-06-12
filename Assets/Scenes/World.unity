@@ -369,6 +369,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92c7cca0b41e95441975248fa52163c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldManager
+  people: []
+  gridCellSize: 5000
+  ticksPerSecond: 1
+  currentYear: 0
+  initialPopulation: 1000
+  references:
+    version: 2
+    RefIds: []
 --- !u!4 &2131376832
 Transform:
   m_ObjectHideFlags: 0
@@ -378,7 +386,7 @@ Transform:
   m_GameObject: {fileID: 2131376830}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.16378, y: -0.07507, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
