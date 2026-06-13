@@ -96,7 +96,7 @@ public class WorldManager : MonoBehaviour
                 if(match != null)
                 {
                     Marry(person, match);
-                    print(person + " married " + match);
+                    //print(person + " married " + match);
                 }
 
             }
@@ -118,11 +118,12 @@ public class WorldManager : MonoBehaviour
                 child.surname = mother.spouse.surname;
             }
         }
+        WorldRender.Instance.RenderWorld();
     }
 
     public void Kill(Person person)
     {
-        print("Died: " + person);
+        //print("Died: " + person);
         person.isAlive = false;
         person.deathYear = currentYear;
         if(person.married)
