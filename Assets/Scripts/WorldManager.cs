@@ -4,9 +4,8 @@ using System.Collections.Generic;
 
 public class WorldManager : MonoBehaviour
 {
-
+    public static WorldManager Instance{ get; private set; }
     System.Random rng = new System.Random();
-    float tickTimer = 0.0f;
 
     public List<Person> people = new List<Person>();
     public Dictionary<(int, int), HashSet<Person>> grid = new Dictionary<(int, int), HashSet<Person>>();
@@ -15,6 +14,24 @@ public class WorldManager : MonoBehaviour
     public int currentYear = 0;
 
     public int initialPopulation = 1000;
+
+    private void Awake()
+    {
+        // Enforce the Singleton pattern
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject); // Delete duplicate instances
+            return;
+        }
+
+        Instance = this;
+
+        // Optional: Keep this object alive across scene transitions
+        // DontDestroyOnLoad(gameObject); 
+    }
+
+
+    float tickTimer = 0.0f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -46,9 +63,10 @@ public class WorldManager : MonoBehaviour
         currentYear++;
         foreach(Person person in people)
         {
-            if(person.isAlive && person.Dies(rng, person.Age(currentYear)))
+            if(person.isAlive)
             {
-                Kill(person);
+                if(person.Dies(rng, person.Age(currentYear)))
+                    Kill(person);
             }
         }
         List<Person> willGiveBirth = new List<Person>();
@@ -65,22 +83,22 @@ public class WorldManager : MonoBehaviour
                     Kill(person);
                 }
             }
+            if(person.isAlive && !person.married && person.wantsToMarry && (person.Age(currentYear) - 10)/40.0 > rng.NextDouble())
+            {
+                person.goingToMarry = true;
+            }
         }
         foreach(Person person in people)
         {
-            if(person.isAlive && !person.married && person.wantsToMarry && (person.Age(currentYear) - 10)/40.0 > rng.NextDouble())
+            if(person.goingToMarry)
             {
-                print("Trying to marry!");
-                List<Person> nearbyPeople = GetPeopleInArea(person.location, 1000);
-                print($"Found {nearbyPeople.Count} nearby people to potentially marry.");
-                foreach(var potentialSpouse in nearbyPeople)
+                Person match = GetRandomPersonToMarry(person, 1000);
+                if(match != null)
                 {
-                    if(potentialSpouse.isAlive && !potentialSpouse.married && potentialSpouse.gender != person.gender && potentialSpouse.wantsToMarry)
-                    {
-                        Marry(person, potentialSpouse);
-                        break;
-                    }
+                    Marry(person, match);
+                    print(person + " married " + match);
                 }
+
             }
         }
         foreach(Person mother in willGiveBirth)
@@ -104,12 +122,14 @@ public class WorldManager : MonoBehaviour
 
     public void Kill(Person person)
     {
+        print("Died: " + person);
         person.isAlive = false;
         person.deathYear = currentYear;
         if(person.married)
         {
             person.spouse.married = false;
             person.spouse.spouse = null;
+            person.spouse.wantsToMarry = false;
         }
         grid[GetGridPosition(person.location)].Remove(person);
     }
@@ -122,6 +142,10 @@ public class WorldManager : MonoBehaviour
         person2.spouse = person1;
         person1.marriageYear = currentYear;
         person2.marriageYear = currentYear;
+        person1.wantsToMarry = false;
+        person2.wantsToMarry = false;
+        person1.goingToMarry = false;
+        person2.goingToMarry = false;
     }
 
     public void Move(Person person, Vector2Int newLocation)
@@ -223,6 +247,10 @@ public class WorldManager : MonoBehaviour
 
     public void AttributeVariation(Person mother, Person father, Person child)
     {
+        if(mother == null)
+            print("Warning: Mother is null in AttributeVariation");
+        if(father == null)
+            print("Warning: Father is null in AttributeVariation");
         child.health = Math.Min((mother.health + father.health) / 2 + (rng.NextDouble() * 10 - 5), 150);
         child.infantHealth = (mother.infantHealth + father.infantHealth) / 2 + (rng.NextDouble() * 10 - 5);
         child.adolescentFactor = Math.Max((mother.adolescentFactor + father.adolescentFactor) / 2 + (rng.NextDouble() * 0.02 - 0.01), 1);
@@ -247,9 +275,13 @@ public class WorldManager : MonoBehaviour
         }
         grid[gridPos].Add(person);
     }
-    public List<Person> GetPeopleInArea(Vector2Int center, float radius)
+    public Person GetRandomPersonToMarry(Person person, float radius)
     {
-        HashSet<Person> nearbyPeople = new HashSet<Person>();
+        Vector2Int center = person.location;
+        Person chosen = null;
+        int count = 0;
+        float radiusSqr = radius * radius;
+
         int minX = Mathf.FloorToInt((center.x - radius) / gridCellSize);
         int maxX = Mathf.FloorToInt((center.x + radius) / gridCellSize);
         int minY = Mathf.FloorToInt((center.y - radius) / gridCellSize);
@@ -262,17 +294,27 @@ public class WorldManager : MonoBehaviour
                 var gridPos = (x, y);
                 if(grid.ContainsKey(gridPos))
                 {
-                    foreach(var person in grid[gridPos])
+                    foreach(var match in grid[gridPos])
                     {
-                        if(Vector2Int.Distance(person.location, center) <= radius)
+                        if(match.goingToMarry)
                         {
-                            nearbyPeople.Add(person);
+                            Vector2Int diff = match.location - center;
+                            float distSqr = diff.x * diff.x + diff.y * diff.y;
+                            if(distSqr <= radiusSqr)
+                            {
+                                count++;
+                                if(UnityEngine.Random.Range(0, count) == 0 && match.gender != person.gender)
+                                {
+                                    chosen = match;
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-        return new List<Person>(nearbyPeople);
+
+        return chosen;
     }
 
     

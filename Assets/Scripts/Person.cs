@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-[Serializable]
 public class Person
 {
     public enum Gender { Male, Female }
@@ -9,15 +8,13 @@ public class Person
     public string firstName;
     public string surname;
     public bool isAlive;
-    [SerializeReference]
     public Person father;
-    [SerializeReference]
     public Person mother;
     public bool married;
     public bool wantsToMarry = true;
+    public bool goingToMarry = false;
     public Person spouse;
     public int numChildren;
-    [SerializeReference]
     public List<Person> children;
     public Vector2Int location;
     public double health;
@@ -85,5 +82,8 @@ public class Person
         return hasChild;
     }
 
-
+    public override string ToString()
+    {        
+        return $"{firstName} {surname}, Age: {Age(WorldManager.Instance.currentYear)}, Father: {(father != null ? father.firstName : "Unknown")}, Mother: {(mother != null ? $"{mother.firstName} {mother.surname}" : "Unknown")}, Children: {numChildren}";
+    }
 }
